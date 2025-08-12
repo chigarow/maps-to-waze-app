@@ -1,0 +1,4 @@
+#!/bin/sh
+# Gradle wrapper stub. This will be replaced by the real wrapper after running 'gradle wrapper'.
+echo "Gradle wrapper not yet initialized. Run 'gradle wrapper' in this directory."
+exit 1

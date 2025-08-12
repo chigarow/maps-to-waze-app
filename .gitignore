@@ -1,0 +1,48 @@
+# Android/IntelliJ/Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
+local.properties
+
+# Log/OS files
+*.log
+*.swp
+.DS_Store
+
+# APKs
+*.apk
+*.ap_*
+
+# Generated files
+app/build/
+app/intermediates/
+app/.cxx/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Misc
+captures/
+output.json
+
+# Kotlin/Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Others
+*.hprof
+
+# Ignore test reports
+**/test-results/
+**/outputs/
