@@ -13,10 +13,33 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    def keystoreProperties = new Properties()
+    def keystorePropertiesFile = rootProject.file("local.properties")
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    } else {
+        println "[Gradle DEBUG] local.properties not found at: ${keystorePropertiesFile.absolutePath}"
+    }
+
+    println "[Gradle DEBUG] RELEASE_STORE_FILE: ${keystoreProperties['RELEASE_STORE_FILE']}"
+    println "[Gradle DEBUG] RELEASE_KEY_ALIAS: ${keystoreProperties['RELEASE_KEY_ALIAS']}"
+    println "[Gradle DEBUG] RELEASE_STORE_PASSWORD: ${keystoreProperties['RELEASE_STORE_PASSWORD']}"
+    println "[Gradle DEBUG] RELEASE_KEY_PASSWORD: ${keystoreProperties['RELEASE_KEY_PASSWORD']}"
+
+    signingConfigs {
+        release {
+            storeFile rootProject.file(keystoreProperties['RELEASE_STORE_FILE'])
+            storePassword keystoreProperties['RELEASE_STORE_PASSWORD']
+            keyAlias keystoreProperties['RELEASE_KEY_ALIAS']
+            keyPassword keystoreProperties['RELEASE_KEY_PASSWORD']
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
