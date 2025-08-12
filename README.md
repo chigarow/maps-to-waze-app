@@ -34,4 +34,4 @@ Or open the project in Android Studio and click "Run".
 
 ## License
 
-MIT License
+This project is licensed under the [MIT License](LICENSE).
