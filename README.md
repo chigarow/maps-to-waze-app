@@ -1,6 +1,6 @@
 # Download
 
-You can download the latest APK from the [Releases page](https://github.com/chigarow/maps-to-waze-app/releases).
+You can download the latest APK from the [Releases page](https://github.com/chigarow/maps-to-waze-app/tags).
 
 
 # Google Link to Waze Android App
