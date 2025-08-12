@@ -1,6 +1,8 @@
+
 # Google Link to Waze Android App
 
-This is an Android application that demonstrates linking Google services to Waze.
+This Android application is based on [papko26/google-link-to-waze](https://github.com/papko26/google-link-to-waze).
+It demonstrates linking Google services to Waze, with additional improvements and customizations.
 
 ## Features
 
