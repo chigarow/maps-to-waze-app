@@ -12,7 +12,7 @@ object MapsUrlToWazeUtil {
     private val coordRegex = Regex("([-+]?\\d+\\.\\d+),\\s*([-+]?\\d+\\.\\d+)")
     private val degreeCoordRegex = Regex("(\\d+)%C2%B0(\\d+)'(\\d+\\.\\d+)%22([NS])\\+(\\d+)%C2%B0(\\d+)'(\\d+\\.\\d+)%22([EW])")
     private val client = OkHttpClient()
-    private const val GOOGLE_API_KEY = "AIzaSyDRq_bbngCOdyzZ8w42vOcUf6g_ETpxkvw"
+    private const val GOOGLE_API_KEY = "xxx"
 
     suspend fun extractCoordinatesFromUrl(url: String): Pair<Double, Double>? {
         val resolvedUrl = resolveFinalUrl(url) ?: url
