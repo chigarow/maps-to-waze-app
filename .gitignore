@@ -11,6 +11,11 @@ build/
 
 # Local configuration
 local.properties
+gradle.properties
+
+# API Keys and sensitive data - IMPORTANT: Never commit these!
+**/api_keys.properties
+**/secrets.properties
 
 # Log/OS files
 *.log
@@ -46,3 +51,5 @@ output.json
 # Ignore test reports
 **/test-results/
 **/outputs/
+
+temp/

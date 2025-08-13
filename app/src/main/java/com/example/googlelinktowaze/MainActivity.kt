@@ -1,223 +1,196 @@
-
 package com.example.googlelinktowaze
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.os.Build
+import android.util.Log
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    private var resolvingShortLink = false
-    @SuppressLint("SetJavaScriptEnabled")
+    
+    companion object {
+        private const val TAG = "GoogleMapsToWaze"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_main)
+        Log.d(TAG, "onCreate() started")
+        
+        try {
+            setContentView(R.layout.activity_main)
+            Log.d(TAG, "setContentView completed")
 
-    val webView = findViewById<WebView>(R.id.webView)
-    val settings = webView.settings
-    settings.javaScriptEnabled = true
-    settings.domStorageEnabled = true
-    settings.cacheMode = WebSettings.LOAD_DEFAULT
-    settings.useWideViewPort = true
-    settings.loadWithOverviewMode = true
-    settings.setSupportMultipleWindows(true)
-    try { settings.saveFormData = true } catch (_: Exception) {}
+            val mapsUrlEditText = findViewById<EditText>(R.id.mapsUrlEditText)
+            val openInWazeButton = findViewById<Button>(R.id.openInWazeButton)
+            Log.d(TAG, "UI elements found successfully")
 
-    // Hidden WebView for resolving short links
-    val hiddenWebView = WebView(this)
-    hiddenWebView.settings.javaScriptEnabled = true
-    hiddenWebView.settings.domStorageEnabled = true
-    hiddenWebView.settings.userAgentString = webView.settings.userAgentString
-    hiddenWebView.layoutParams = android.widget.LinearLayout.LayoutParams(1, 1)
-    hiddenWebView.visibility = android.view.View.GONE
-    (findViewById<android.view.ViewGroup>(android.R.id.content)).addView(hiddenWebView)
-        android.webkit.CookieManager.getInstance().setAcceptCookie(true)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
-            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            // Handle manual input
+            openInWazeButton.setOnClickListener {
+                Log.d(TAG, "Open in Waze button clicked")
+                val url = mapsUrlEditText.text.toString()
+                Log.d(TAG, "Input URL: $url")
+                
+                if (url.isBlank()) {
+                    Log.w(TAG, "URL is blank")
+                    Toast.makeText(this, "Please enter a Google Maps URL", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                
+                Log.d(TAG, "Launching coroutine to handle Google Maps URL")
+                lifecycleScope.launch {
+                    handleGoogleMapsUrl(url)
+                }
+            }
+
+            // Handle incoming share intent from Google Maps
+            Log.d(TAG, "Checking for share intent")
+            if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+                Log.d(TAG, "Share intent detected")
+                val sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT)
+                Log.d(TAG, "Shared URL: $sharedUrl")
+                
+                if (!sharedUrl.isNullOrBlank()) {
+                    Log.d(TAG, "Setting shared URL in EditText and processing")
+                    mapsUrlEditText.setText(sharedUrl)
+                    lifecycleScope.launch {
+                        handleGoogleMapsUrl(sharedUrl)
+                    }
+                } else {
+                    Log.w(TAG, "Shared URL is null or blank")
+                }
+            } else {
+                Log.d(TAG, "No share intent detected")
+            }
+            
+            Log.d(TAG, "onCreate() completed successfully")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in onCreate()", e)
+            Toast.makeText(this, "Error initializing app: ${e.message}", Toast.LENGTH_LONG).show()
         }
-        settings.userAgentString = settings.userAgentString + " Chrome/99.0.4844.94 Mobile"
+    }
 
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                if (url != null && url.startsWith("waze://")) {
-                    launchWazeIntent(url)
-                    return true
-                }
-                return false
-            }
-            override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
-                val url = request?.url?.toString()
-                if (url != null && url.startsWith("waze://")) {
-                    launchWazeIntent(url)
-                    return true
-                }
-                return false
-            }
-            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                super.onPageStarted(view, url, favicon)
-                if (url != null && url.startsWith("waze://")) {
-                    launchWazeIntent(url)
-                    view?.stopLoading()
-                }
-            }
-            override fun onReceivedHttpError(view: WebView?, request: android.webkit.WebResourceRequest?, errorResponse: android.webkit.WebResourceResponse?) {
-                super.onReceivedHttpError(view, request, errorResponse)
-                android.util.Log.e("WebView", "HTTP error: ${errorResponse?.statusCode} ${errorResponse?.reasonPhrase}")
-            }
-            override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-                super.onReceivedError(view, errorCode, description, failingUrl)
-                android.util.Log.e("WebView", "Error: $errorCode $description at $failingUrl")
-            }
-            override fun onFormResubmission(view: WebView?, dontResend: android.os.Message?, resend: android.os.Message?) {
-                resend?.sendToTarget()
-            }
-            private fun launchWazeIntent(url: String) {
+    // Extract coordinates and launch Waze
+    private suspend fun handleGoogleMapsUrl(url: String) {
+        Log.d(TAG, "handleGoogleMapsUrl() started with URL: $url")
+        
+        try {
+            Log.d(TAG, "Calling MapsUrlToWazeUtil.extractCoordinatesFromUrl()")
+            val coords = MapsUrlToWazeUtil.extractCoordinatesFromUrl(url)
+            Log.d(TAG, "Extracted coordinates: $coords")
+            
+            if (coords != null) {
+                val (lat, lon) = coords
+                Log.d(TAG, "Coordinates found - Lat: $lat, Lon: $lon")
+                
+                val wazeUri = "waze://?ll=$lat,$lon&navigate=yes"
+                Log.d(TAG, "Generated Waze URI: $wazeUri")
+                
                 try {
-                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                    if (intent.resolveActivity(this@MainActivity.packageManager) != null) {
-                        startActivity(intent)
+                    // Try to launch Waze directly with multiple fallback approaches
+                    if (launchWaze(wazeUri, lat, lon)) {
+                        Log.d(TAG, "Waze launched successfully")
                     } else {
-                        android.widget.Toast.makeText(this@MainActivity, "Waze app is not installed!", android.widget.Toast.LENGTH_SHORT).show()
+                        Log.w(TAG, "Failed to launch Waze, trying alternative methods")
+                        if (!tryAlternativeWazeLaunch(lat, lon)) {
+                            Log.w(TAG, "All Waze launch methods failed, opening Play Store")
+                            openWazeInPlayStore()
+                        }
                     }
                 } catch (e: Exception) {
-                    android.widget.Toast.makeText(this@MainActivity, "Waze app is not installed!", android.widget.Toast.LENGTH_SHORT).show()
+                    Log.e(TAG, "Error launching Waze app", e)
+                    Toast.makeText(this, "Failed to open Waze app: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
+            } else {
+                Log.w(TAG, "Could not extract coordinates from URL")
+                Toast.makeText(this, "Could not extract coordinates from the URL.", Toast.LENGTH_LONG).show()
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in handleGoogleMapsUrl()", e)
+            Toast.makeText(this, "Error processing URL: ${e.message}", Toast.LENGTH_LONG).show()
         }
-        webView.webChromeClient = WebChromeClient()
-
-        // Set up WebViewClient to handle waze:// URLs and web Waze redirects
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                android.util.Log.d("WAZE_DEBUG", "shouldOverrideUrlLoading: $url")
-                if (url != null) {
-                    // Handle direct waze:// URLs
-                    if (url.startsWith("waze://")) {
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                            if (intent.resolveActivity(this@MainActivity.packageManager) != null) {
-                                startActivity(intent)
-                            } else {
-                                android.widget.Toast.makeText(this@MainActivity, "Waze app is not installed!", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        } catch (e: Exception) {
-                            android.widget.Toast.makeText(this@MainActivity, "Failed to open Waze app!", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                        return true
-                    }
-                    // Handle Waze web URLs that should open the app
-                    if (url.contains("waze.com") && url.contains("navigate=yes")) {
-                        android.util.Log.d("WAZE_DEBUG", "Attempting to open Waze app with URL: $url")
-                        return launchWazeFromWebUrl(url)
-                    }
-                }
-                return false
-            }
-            
-            override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
-                val url = request?.url?.toString()
-                android.util.Log.d("WAZE_DEBUG", "shouldOverrideUrlLoading (WebResourceRequest): $url")
-                return shouldOverrideUrlLoading(view, url)
-            }
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                // If shared from Google Maps, auto-fill and trigger the webapp
-                if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-                    val sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT)
-                    if (sharedUrl != null) {
-                        view?.evaluateJavascript(
-                            """
-                            (function() {
-                                var input = document.getElementById('url');
-                                if (input) {
-                                    input.value = ${toJsString(sharedUrl)};
-                                    var btns = document.getElementsByTagName('button');
-                                    for (var i=0; i<btns.length; i++) {
-                                        if (btns[i].textContent && btns[i].textContent.toLowerCase().includes('open in waze')) {
-                                            btns[i].click();
-                                            return;
-                                        }
-                                    }
-                                }
-                            })();
-                            """.trimIndent(),
-                            null
-                        )
-                    }
-                }
-            }
-        }
-        // Always load the webapp
-        webView.loadUrl("https://waze.papko.org/")
-    }
-    
-    // Helper function to properly launch Waze using the Google recommended approach
-    private fun launchWazeFromWebUrl(url: String): Boolean {
-        android.util.Log.d("WAZE_DEBUG", "launchWazeFromWebUrl: $url")
         
-        // Extract coordinates from ul.waze.com URL
-        if (url.startsWith("https://ul.waze.com/ul?")) {
-            val uri = android.net.Uri.parse(url)
-            val ll = uri.getQueryParameter("ll")
-            val navigate = uri.getQueryParameter("navigate")
-            
-            if (ll != null && navigate == "yes") {
-                val coords = ll.split(",")
-                if (coords.size == 2) {
-                    val lat = coords[0].trim()
-                    val lon = coords[1].trim()
-                    
-                    android.util.Log.d("WAZE_DEBUG", "Extracted coordinates: $lat, $lon")
-                    
-                    // Use the Google recommended approach
-                    try {
-                        // First try the official waze.com URL as per Google documentation
-                        val wazeUrl = "https://waze.com/ul?ll=$lat,$lon&navigate=yes"
-                        android.util.Log.d("WAZE_DEBUG", "Trying official Waze URL: $wazeUrl")
-                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(wazeUrl))
-                        startActivity(intent)
-                        return true
-                    } catch (e: Exception) {
-                        android.util.Log.e("WAZE_DEBUG", "Failed with official URL, trying waze:// scheme: $e")
-                        
-                        // Fallback to waze:// scheme
-                        try {
-                            val wazeSchemeUrl = "waze://?ll=$lat,$lon&navigate=yes"
-                            android.util.Log.d("WAZE_DEBUG", "Trying waze:// scheme: $wazeSchemeUrl")
-                            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(wazeSchemeUrl))
-                            startActivity(intent)
-                            return true
-                        } catch (e2: Exception) {
-                            android.util.Log.e("WAZE_DEBUG", "waze:// scheme also failed: $e2")
-                            
-                            // Final fallback - open Play Store
-                            try {
-                                android.util.Log.d("WAZE_DEBUG", "Opening Play Store for Waze")
-                                val playStoreIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=com.waze"))
-                                startActivity(playStoreIntent)
-                                return true
-                            } catch (e3: Exception) {
-                                android.util.Log.e("WAZE_DEBUG", "Play Store also failed: $e3")
-                                return false
-                            }
-                        }
-                    }
-                }
+        Log.d(TAG, "handleGoogleMapsUrl() completed")
+    }
+
+    private fun launchWaze(wazeUri: String, lat: Double, lon: Double): Boolean {
+        return try {
+            // Method 1: Direct URI launch with explicit package
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(wazeUri))
+            intent.setPackage("com.waze")
+            Log.d(TAG, "Attempting to launch Waze with package: $wazeUri")
+            startActivity(intent)
+            Log.d(TAG, "Waze launched with explicit package")
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "Direct package launch failed: ${e.message}")
+            try {
+                // Method 2: Try without explicit package
+                val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(wazeUri))
+                Log.d(TAG, "Attempting to launch Waze without package constraint")
+                startActivity(intent)
+                Log.d(TAG, "Waze launched without package constraint")
+                true
+            } catch (e2: Exception) {
+                Log.w(TAG, "URI launch failed: ${e2.message}")
+                false
             }
         }
-        return false
     }
-}
 
-// Helper to safely escape a string for JS injection
-fun toJsString(str: String): String {
-    return '"' + str.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'") + '"'
+    private fun tryAlternativeWazeLaunch(lat: Double, lon: Double): Boolean {
+        return try {
+            // Method 3: Try alternative Waze URI formats
+            val alternativeUris = listOf(
+                "waze://?ll=$lat,$lon&navigate=yes&z=10",
+                "https://waze.com/ul?ll=$lat,$lon&navigate=yes",
+                "waze://?q=$lat,$lon&navigate=yes",
+                "geo:$lat,$lon?q=$lat,$lon(Destination)"
+            )
+
+            for (uri in alternativeUris) {
+                try {
+                    Log.d(TAG, "Trying alternative URI: $uri")
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri))
+                    if (uri.startsWith("waze://")) {
+                        intent.setPackage("com.waze")
+                    }
+                    startActivity(intent)
+                    Log.d(TAG, "Successfully launched with URI: $uri")
+                    return true
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed with URI $uri: ${e.message}")
+                    continue
+                }
+            }
+
+            false
+        } catch (e: Exception) {
+            Log.w(TAG, "All alternative launch methods failed: ${e.message}")
+            false
+        }
+    }
+
+    private fun openWazeInPlayStore() {
+        try {
+            // Try to open in Play Store app first
+            val playStoreIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=com.waze"))
+            startActivity(playStoreIntent)
+            Log.d(TAG, "Play Store app opened for Waze")
+        } catch (e: Exception) {
+            try {
+                // Fallback to Play Store web
+                val webIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.waze"))
+                startActivity(webIntent)
+                Log.d(TAG, "Play Store web opened for Waze")
+            } catch (e2: Exception) {
+                Log.e(TAG, "Failed to open Play Store: ${e2.message}")
+                Toast.makeText(this, "Please install Waze from Play Store", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 }

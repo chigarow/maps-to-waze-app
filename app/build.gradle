@@ -6,6 +6,11 @@ plugins {
 android {
     namespace 'com.example.googlelinktowaze'
     compileSdkVersion 34
+    
+    buildFeatures {
+        buildConfig true
+    }
+    
     defaultConfig {
         applicationId "com.example.googlelinktowaze"
         minSdkVersion 23
@@ -36,10 +41,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField "String", "GOOGLE_PLACES_API_KEY", "\"${project.findProperty('GOOGLE_PLACES_API_KEY') ?: ''}\""
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            buildConfigField "String", "GOOGLE_PLACES_API_KEY", "\"${project.findProperty('GOOGLE_PLACES_API_KEY') ?: ''}\""
         }
     }
     compileOptions {
