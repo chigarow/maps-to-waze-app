@@ -31,7 +31,7 @@ This Android application allows you to share Google Maps links and automatically
 
 ```bash
 git clone https://github.com/chigarow/googlemaps-to-waze-app.git
-cd maps-to-waze-app
+cd googlemaps-to-waze-app
 ```
 
 ### 2. Configure API Keys
