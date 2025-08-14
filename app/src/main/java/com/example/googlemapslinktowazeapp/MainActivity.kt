@@ -1,4 +1,4 @@
-package com.example.googlelinktowaze
+package com.example.googlemapslinktowazeapp
 
 import android.content.Intent
 import android.os.Bundle
@@ -19,30 +19,42 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() started")
-        
+
         try {
             setContentView(R.layout.activity_main)
             Log.d(TAG, "setContentView completed")
 
             val mapsUrlEditText = findViewById<EditText>(R.id.mapsUrlEditText)
             val openInWazeButton = findViewById<Button>(R.id.openInWazeButton)
+            val progressBar = findViewById<android.widget.ProgressBar>(R.id.progressBar)
             Log.d(TAG, "UI elements found successfully")
+
+            fun setProcessingState(processing: Boolean) {
+                openInWazeButton.isEnabled = !processing
+                openInWazeButton.alpha = if (processing) 0.5f else 1.0f
+                progressBar.visibility = if (processing) android.view.View.VISIBLE else android.view.View.GONE
+            }
 
             // Handle manual input
             openInWazeButton.setOnClickListener {
                 Log.d(TAG, "Open in Waze button clicked")
                 val url = mapsUrlEditText.text.toString()
                 Log.d(TAG, "Input URL: $url")
-                
+
                 if (url.isBlank()) {
                     Log.w(TAG, "URL is blank")
                     Toast.makeText(this, "Please enter a Google Maps URL", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                
+
                 Log.d(TAG, "Launching coroutine to handle Google Maps URL")
                 lifecycleScope.launch {
-                    handleGoogleMapsUrl(url)
+                    setProcessingState(true)
+                    try {
+                        handleGoogleMapsUrl(url)
+                    } finally {
+                        setProcessingState(false)
+                    }
                 }
             }
 
@@ -52,12 +64,17 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "Share intent detected")
                 val sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT)
                 Log.d(TAG, "Shared URL: $sharedUrl")
-                
+
                 if (!sharedUrl.isNullOrBlank()) {
                     Log.d(TAG, "Setting shared URL in EditText and processing")
                     mapsUrlEditText.setText(sharedUrl)
                     lifecycleScope.launch {
-                        handleGoogleMapsUrl(sharedUrl)
+                        setProcessingState(true)
+                        try {
+                            handleGoogleMapsUrl(sharedUrl)
+                        } finally {
+                            setProcessingState(false)
+                        }
                     }
                 } else {
                     Log.w(TAG, "Shared URL is null or blank")
@@ -65,9 +82,9 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Log.d(TAG, "No share intent detected")
             }
-            
+
             Log.d(TAG, "onCreate() completed successfully")
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreate()", e)
             Toast.makeText(this, "Error initializing app: ${e.message}", Toast.LENGTH_LONG).show()

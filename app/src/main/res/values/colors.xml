@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_dark">#181A20</color>
+    <color name="neon_blue">#6EE2F5</color>
+    <color name="neon_purple">#6454F0</color>
+    <color name="neon_pink">#F857A6</color>
+    <color name="input_bg">#23242A</color>
+    <color name="input_hint">#B0B3C6</color>
+    <color name="button_text">#FFFFFF</color>
+    <color name="footer_text">#B0B3C6</color>
+</resources>

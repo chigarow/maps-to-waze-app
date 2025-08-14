@@ -1,21 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:gravity="center"
+    android:background="@color/background_dark"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Google Maps\nLink to Waze"
+        android:textColor="@color/neon_blue"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:shadowColor="@color/neon_purple"
+        android:shadowDx="0"
+        android:shadowDy="2"
+        android:shadowRadius="8"/>
 
     <EditText
         android:id="@+id/mapsUrlEditText"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Paste Google Maps URL here" />
+        android:layout_height="56dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/rounded_edittext"
+        android:hint="Google Maps URL"
+        android:padding="16dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="@color/input_hint"
+        android:textSize="16sp"
+        android:elevation="2dp"/>
+
 
     <Button
         android:id="@+id/openInWazeButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
+        android:layout_marginTop="32dp"
         android:text="Open in Waze"
-        android:layout_marginTop="8dp" />
+        android:textAllCaps="false"
+        android:textColor="@color/button_text"
+        android:textSize="20sp"
+        android:background="@drawable/gradient_button"
+        android:elevation="4dp"/>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/footerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Made by chigarow"
+        android:textColor="@color/footer_text"
+        android:textSize="14sp"
+        android:layout_marginTop="48dp"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"/>
 
 </LinearLayout>

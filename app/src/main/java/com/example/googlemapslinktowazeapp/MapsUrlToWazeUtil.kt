@@ -1,4 +1,4 @@
-package com.example.googlelinktowaze
+package com.example.googlemapslinktowazeapp
 
 import android.util.Log
 import okhttp3.OkHttpClient

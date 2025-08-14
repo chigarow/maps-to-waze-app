@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.googlelinktowaze'
+    namespace 'com.example.googlemapslinktowazeapp'
     compileSdkVersion 34
     
     buildFeatures {
@@ -12,7 +12,7 @@ android {
     }
     
     defaultConfig {
-        applicationId "com.example.googlelinktowaze"
+    applicationId "com.example.googlemapslinktowazeapp"
         minSdkVersion 23
         targetSdkVersion 34
         versionCode 1
