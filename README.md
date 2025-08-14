@@ -1,4 +1,4 @@
-# Google Link to Waze Android App
+# Google Maps Link to Waze Android App
 
 This Android application allows you to share Google Maps links and automatically launch Waze for navigation. It extracts coordinates from various Google Maps URL formats and opens Waze with turn-by-turn navigation to the destination.
 
